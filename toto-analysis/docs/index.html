@@ -1224,9 +1224,9 @@ header {
     <div class="hero-draw-top">
       <div>
         <div class="draw-badge">DRAW NUMBER</div>
-        <div class="draw-id">#4229</div>
+        <div class="draw-id" id="heroDrawId">#4229</div>
       </div>
-      <div class="draw-date-tag">2026 · 02 · 26 · THURSDAY</div>
+      <div class="draw-date-tag" id="heroDrawDate">2026 · 02 · 26 · THURSDAY</div>
     </div>
     <div class="balls-row" id="heroBalls"></div>
   </div>
@@ -1609,6 +1609,12 @@ function renderHero() {
   h += '<span class="plus-sign">＋</span>';
   h += ball(d.add, 'add', 58);
   el.innerHTML = h;
+
+  document.getElementById('heroDrawId').textContent = `#${d.no}`;
+  const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  const [y, m, day] = d.date.split('-');
+  const dow = days[new Date(d.date).getDay()];
+  document.getElementById('heroDrawDate').textContent = `${y} · ${m} · ${day} · ${dow}`;
 }
 
 function ball(n, type, size) {
