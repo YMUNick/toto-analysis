@@ -66,10 +66,10 @@ jobs:
         run: |
           if [ "$FULL_REFRESH" = "true" ]; then
             echo "執行全量爬取..."
-            python scraper/scraper.py --full
+            python scraper.py --full
           else
             echo "執行增量更新..."
-            python scraper/scraper.py
+            python scraper.py
           fi
 
       # ── 4. 檢查是否有變更 ─────────────────────────
