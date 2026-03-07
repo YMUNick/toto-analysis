@@ -1,1 +1,12 @@
-[]
+[
+  {"draw_number":4162,"draw_date":"2026-03-05","num1":1,"num2":5,"num3":12,"num4":15,"num5":22,"num6":42,"additional_num":37},
+  {"draw_number":4161,"draw_date":"2026-03-02","num1":6,"num2":8,"num3":28,"num4":37,"num5":41,"num6":49,"additional_num":40},
+  {"draw_number":4160,"draw_date":"2026-02-27","num1":5,"num2":9,"num3":20,"num4":23,"num5":45,"num6":46,"additional_num":7},
+  {"draw_number":4159,"draw_date":"2026-02-23","num1":24,"num2":26,"num3":30,"num4":32,"num5":37,"num6":47,"additional_num":2},
+  {"draw_number":4158,"draw_date":"2026-02-19","num1":8,"num2":16,"num3":17,"num4":34,"num5":38,"num6":48,"additional_num":25},
+  {"draw_number":4157,"draw_date":"2026-02-16","num1":13,"num2":24,"num3":28,"num4":34,"num5":37,"num6":44,"additional_num":29},
+  {"draw_number":4156,"draw_date":"2026-02-13","num1":10,"num2":15,"num3":25,"num4":43,"num5":45,"num6":49,"additional_num":4},
+  {"draw_number":4155,"draw_date":"2026-02-09","num1":10,"num2":15,"num3":29,"num4":31,"num5":33,"num6":49,"additional_num":30},
+  {"draw_number":4154,"draw_date":"2026-02-05","num1":6,"num2":18,"num3":24,"num4":26,"num5":36,"num6":48,"additional_num":5},
+  {"draw_number":4153,"draw_date":"2026-02-02","num1":4,"num2":19,"num3":40,"num4":41,"num5":46,"num6":47,"additional_num":20}
+]
