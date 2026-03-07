@@ -12,6 +12,9 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -29,3 +32,11 @@ jobs:
         run: |
           echo "Running TOTO scraper..."
           python toto-analysis/scraper/scraper.py
+
+      - name: Commit & push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add toto-analysis/data/results.json toto-analysis/data/meta.json
+          git diff --staged --quiet || git commit -m "🎱 Update TOTO data [skip ci]"
+          git push
