@@ -23,9 +23,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 pandas
+          pip install -r scraper/requirements.txt
 
       - name: Run scraper
         run: |
           echo "Running TOTO scraper..."
-          python scraper.py
+          python scraper/scraper.py
