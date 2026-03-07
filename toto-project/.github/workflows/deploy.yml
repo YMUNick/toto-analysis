@@ -1,0 +1,59 @@
+# .github/workflows/deploy.yml
+#
+# 每次 data/ 更新後，自動重建前端並部署到 GitHub Pages
+# 前端直接讀取 /data/results.json，不需要後端伺服器
+
+name: 🚀 Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/**"
+      - "docs/**"
+      - ".github/workflows/deploy.yml"
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Prepare docs folder
+        run: |
+          # docs/ 就是 GitHub Pages 的根目錄
+          # 把最新 data 複製進去讓前端能讀到
+          cp data/results.json docs/data/results.json
+          cp data/meta.json    docs/data/meta.json
+          echo "Data files copied to docs/"
+          ls -lh docs/data/
+
+      - name: 📄 Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: 📦 Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

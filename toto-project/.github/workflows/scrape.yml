@@ -1,0 +1,116 @@
+# .github/workflows/scrape.yml
+#
+# 觸發時機：
+#   1. 定時：每週一、四 18:30 UTC（= 新加坡時間 02:30，開獎後數小時）
+#   2. 手動：在 GitHub Actions 頁面點 "Run workflow"
+#   3. Push 到 main 時（方便首次部署測試）
+#
+# 流程：
+#   爬取最新 TOTO 結果 → 更新 data/results.json & data/meta.json → commit & push 回 repo
+
+name: 🎱 TOTO Scraper
+
+on:
+  schedule:
+    # TOTO 開獎時間：每週一、四 21:30 SGT = 13:30 UTC
+    # 我們在 14:30 UTC 執行，確保官網已更新
+    - cron: "30 14 * * 1"   # 每週一
+    - cron: "30 14 * * 4"   # 每週四
+
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: "全量重新爬取（首次部署請勾選）"
+        required: false
+        default: "false"
+        type: boolean
+
+  push:
+    branches: [main]
+    paths:
+      - "scraper/**"
+      - ".github/workflows/scrape.yml"
+
+jobs:
+  scrape:
+    name: Scrape & Update Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write   # 允許 commit & push
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      # ── 2. Python 環境 ────────────────────────────
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: 📦 Install dependencies
+        run: pip install -r scraper/requirements.txt
+
+      # ── 3. 執行爬蟲 ──────────────────────────────
+      - name: 🕷️ Run scraper
+        env:
+          FULL_REFRESH: ${{ github.event.inputs.full_refresh || 'false' }}
+        run: |
+          if [ "$FULL_REFRESH" = "true" ]; then
+            echo "執行全量爬取..."
+            python scraper/scraper.py --full
+          else
+            echo "執行增量更新..."
+            python scraper/scraper.py
+          fi
+
+      # ── 4. 檢查是否有變更 ─────────────────────────
+      - name: 🔍 Check for changes
+        id: check_changes
+        run: |
+          git diff --quiet data/ || echo "changed=true" >> $GITHUB_OUTPUT
+
+      # ── 5. Commit & Push ──────────────────────────
+      - name: 💾 Commit & push data
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 取得最新期數顯示在 commit message
+          LATEST=$(python3 -c "
+          import json, pathlib
+          f = pathlib.Path('data/meta.json')
+          if f.exists():
+              m = json.loads(f.read_text())
+              print(f\"#{m['latest_draw']} ({m['latest_date']})\")
+          else:
+              print('unknown')
+          ")
+
+          git add data/results.json data/meta.json
+          git commit -m "🎱 自動更新 TOTO 資料 · 最新期 $LATEST [skip ci]"
+          git push
+
+      # ── 6. 無變更通知 ─────────────────────────────
+      - name: ℹ️ No new data
+        if: steps.check_changes.outputs.changed != 'true'
+        run: echo "資料已是最新，無需更新。"
+
+      # ── 7. 上傳爬蟲 log（除錯用）─────────────────
+      - name: 📋 Upload log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-log-${{ github.run_number }}
+          path: |
+            data/meta.json
+          retention-days: 7

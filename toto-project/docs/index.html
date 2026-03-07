@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTO Singapore · 號碼分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --black:   #080a0e;
+  --dark:    #0d1017;
+  --card:    #111520;
+  --card2:   #161c2a;
+  --border:  rgba(180,150,80,0.18);
+  --gold:    #c9a84c;
+  --gold2:   #f0d080;
+  --gold3:   rgba(201,168,76,0.12);
+  --red:     #e05555;
+  --blue:    #5599ee;
+  --green:   #44bb88;
+  --text:    #e8dfc8;
+  --muted:   #7a7060;
+  --shine:   linear-gradient(135deg, #c9a84c 0%, #f0d080 40%, #c9a84c 100%);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--black);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Gold divider line ── */
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold2) 50%, var(--gold) 70%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* ══════════════════════════
+   HEADER
+══════════════════════════ */
+header {
+  position: relative;
+  z-index: 10;
+  padding: 52px 40px 40px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(201,168,76,0.06) 0%, transparent 100%);
+}
+
+.crown {
+  font-size: 28px;
+  margin-bottom: 10px;
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.site-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(32px, 6vw, 64px);
+  font-weight: 900;
+  letter-spacing: 6px;
+  background: var(--shine);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.site-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: var(--muted);
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+.header-meta {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta-chip .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* ══════════════════════════
+   LAYOUT
+══════════════════════════ */
+.wrapper {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+  z-index: 10;
+}
+
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ══════════════════════════
+   LATEST DRAW HERO
+══════════════════════════ */
+.hero-draw {
+  background: linear-gradient(135deg, #0f1520 0%, #161c2e 60%, #0f1520 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-draw::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-draw-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.draw-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+.draw-id {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--shine);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.draw-date-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+/* ── Glass lottery balls ── */
+.balls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ball {
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  position: relative;
+  cursor: default;
+  transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  flex-shrink: 0;
+}
+.ball:hover { transform: scale(1.15) rotate(-5deg); }
+
+/* Glossy highlight */
+.ball::after {
+  content: '';
+  position: absolute;
+  top: 8px; left: 11px;
+  width: 18px; height: 10px;
+  background: rgba(255,255,255,0.35);
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+
+.ball-main {
+  background: radial-gradient(circle at 38% 35%, #2a4a7a, #0d1e40 70%);
+  border: 2px solid rgba(120,180,255,0.5);
+  color: #a8d4ff;
+  box-shadow: 0 4px 20px rgba(80,140,255,0.25), inset 0 -2px 6px rgba(0,0,0,0.4);
+}
+
+.ball-add {
+  background: radial-gradient(circle at 38% 35%, #7a2a10, #3a0e05 70%);
+  border: 2px solid rgba(255,140,80,0.6);
+  color: #ffaa77;
+  box-shadow: 0 4px 20px rgba(255,100,40,0.3), inset 0 -2px 6px rgba(0,0,0,0.4);
+}
+
+.plus-sign {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--gold);
+  opacity: 0.5;
+  margin: 0 2px;
+}
+
+/* ══════════════════════════
+   RECENT 10 DRAWS TABLE
+══════════════════════════ */
+.draws-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.draws-grid-header {
+  display: grid;
+  grid-template-columns: 90px 120px 1fr 80px;
+  padding: 14px 24px;
+  background: rgba(201,168,76,0.06);
+  border-bottom: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.draws-grid-row {
+  display: grid;
+  grid-template-columns: 90px 120px 1fr 80px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  align-items: center;
+  transition: background 0.2s;
+  animation: rowIn 0.4s ease both;
+}
+.draws-grid-row:last-child { border-bottom: none; }
+.draws-grid-row:hover { background: rgba(201,168,76,0.04); }
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.row-draw-no {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.row-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.row-balls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.mini-ball {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  position: relative;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.mini-ball:hover { transform: scale(1.2); }
+
+.mini-ball::after {
+  content: '';
+  position: absolute;
+  top: 5px; left: 7px;
+  width: 10px; height: 5px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+
+.mb-main {
+  background: radial-gradient(circle at 38% 35%, #1e3a6a, #091528);
+  border: 1.5px solid rgba(100,160,255,0.45);
+  color: #90c0ff;
+  box-shadow: 0 2px 10px rgba(60,120,255,0.2);
+}
+
+.mb-add {
+  background: radial-gradient(circle at 38% 35%, #6a2010, #28080a);
+  border: 1.5px solid rgba(255,120,60,0.5);
+  color: #ff9966;
+  box-shadow: 0 2px 10px rgba(220,80,20,0.25);
+}
+
+.row-plus {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--gold);
+  opacity: 0.4;
+}
+
+.row-jackpot {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ══════════════════════════
+   STATS CARDS ROW
+══════════════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 800px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .draws-grid-header, .draws-grid-row {
+    grid-template-columns: 70px 90px 1fr;
+  }
+  .row-jackpot { display: none; }
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.2s;
+  animation: cardIn 0.5s ease both;
+}
+.stat-card:hover {
+  border-color: rgba(201,168,76,0.4);
+  transform: translateY(-2px);
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  bottom: -20px; right: -20px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  font-weight: 700;
+  background: var(--shine);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.stat-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ══════════════════════════
+   CHARTS ROW
+══════════════════════════ */
+.charts-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; }
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 28px 24px;
+  animation: cardIn 0.6s ease both;
+}
+
+.chart-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.chart-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+
+/* Frequency bars */
+.freq-container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.freq-container::-webkit-scrollbar { width: 3px; }
+.freq-container::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; opacity: 0.5; }
+
+.freq-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.2s;
+}
+.freq-row:hover { opacity: 0.85; }
+
+.freq-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  width: 22px;
+  text-align: right;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.freq-bar-wrap {
+  flex: 1;
+  height: 20px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.freq-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.freq-bar-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+
+.freq-mini-ball {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* Donut chart area */
+.donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.donut-svg-wrap {
+  position: relative;
+  width: 180px; height: 180px;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-center-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--shine);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.donut-center-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+
+.legend-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+}
+
+.legend-val {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Hot/cold number pills row */
+.pills-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.num-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 7px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  transition: transform 0.2s;
+  cursor: default;
+  border: 1px solid transparent;
+}
+.num-pill:hover { transform: scale(1.05); }
+
+.pill-ball {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.pill-hot {
+  background: rgba(220,60,60,0.1);
+  border-color: rgba(220,60,60,0.25);
+  color: #ee8888;
+}
+.pill-hot .pill-ball {
+  background: radial-gradient(circle at 38% 35%, #7a1515, #300808);
+  border: 1.5px solid rgba(220,80,80,0.5);
+  color: #ff9999;
+}
+
+.pill-cold {
+  background: rgba(60,100,220,0.1);
+  border-color: rgba(60,100,220,0.25);
+  color: #88aaee;
+}
+.pill-cold .pill-ball {
+  background: radial-gradient(circle at 38% 35%, #102050, #050e28);
+  border: 1.5px solid rgba(80,130,220,0.5);
+  color: #99bbff;
+}
+
+/* ── Two bottom charts ── */
+.bottom-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 700px) {
+  .bottom-charts { grid-template-columns: 1fr; }
+}
+
+/* Heatmap */
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.hm-cell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid transparent;
+}
+.hm-cell:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  border-color: rgba(255,255,255,0.2);
+  z-index: 2;
+}
+
+.hm-sub {
+  font-size: 8px;
+  opacity: 0.7;
+  margin-top: 1px;
+}
+
+/* Gap analysis bar chart */
+.gap-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gap-num {
+  width: 26px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.gap-track {
+  flex: 1;
+  height: 22px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gap-fill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  transition: width 1.2s cubic-bezier(.4,0,.2,1);
+}
+
+.gap-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Prediction section */
+.prediction-section {
+  margin-top: 16px;
+}
+
+.pred-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 28px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  transition: border-color 0.3s;
+  animation: cardIn 0.5s ease both;
+}
+.pred-row:hover { border-color: rgba(201,168,76,0.35); }
+
+.pred-meta {
+  min-width: 180px;
+}
+
+.pred-method-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  color: var(--gold2);
+  margin-bottom: 4px;
+}
+
+.pred-method-desc {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.pred-balls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.ball-pred {
+  background: radial-gradient(circle at 38% 35%, #1a4a20, #08200e);
+  border: 2px solid rgba(80,200,100,0.5);
+  color: #88ee99;
+  box-shadow: 0 0 14px rgba(60,180,80,0.25), inset 0 -2px 6px rgba(0,0,0,0.4);
+}
+
+.ball-pred-add {
+  background: radial-gradient(circle at 38% 35%, #4a3010, #201208);
+  border: 2px solid rgba(200,160,60,0.5);
+  color: #e8c060;
+  box-shadow: 0 0 14px rgba(180,130,40,0.25), inset 0 -2px 6px rgba(0,0,0,0.4);
+}
+
+/* Regenerate button */
+.regen-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 10px 20px;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: rgba(201,168,76,0.07);
+  color: var(--gold);
+  cursor: pointer;
+  border-radius: 8px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.regen-btn:hover {
+  background: rgba(201,168,76,0.14);
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(201,168,76,0.15);
+}
+
+/* ── Disclaimer ── */
+.disclaimer {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* Spacers */
+.spacer { height: 36px; }
+.spacer-sm { height: 16px; }
+
+/* scroll animate */
+.fade-up {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ══════════════════════════
+   LOGIN OVERLAY
+══════════════════════════ */
+#loginOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #060810;
+  /* Animated radial glow */
+  background-image:
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(201,168,76,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 20% 20%,  rgba(201,168,76,0.04) 0%, transparent 60%);
+}
+
+/* Grid pattern behind login */
+#loginOverlay::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+#loginOverlay.hide {
+  animation: overlayOut 0.7s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes overlayOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); pointer-events: none; }
+}
+
+.login-box {
+  position: relative;
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  background: linear-gradient(145deg, #0f1520 0%, #161c2e 100%);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 20px;
+  padding: 48px 44px 44px;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(201,168,76,0.08) inset,
+    0 1px 0 rgba(201,168,76,0.2) inset;
+  animation: boxIn 0.6s cubic-bezier(.34,1.3,.64,1) both;
+}
+@keyframes boxIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* Top gold accent bar */
+.login-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+}
+
+.login-crown {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 6px;
+  animation: float 4s ease-in-out infinite;
+}
+
+.login-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 900;
+  text-align: center;
+  background: var(--shine);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 3px;
+  margin-bottom: 4px;
+}
+
+.login-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 38px;
+  text-transform: uppercase;
+}
+
+.login-field {
+  margin-bottom: 18px;
+}
+
+.login-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.login-input {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  letter-spacing: 1px;
+}
+.login-input::placeholder {
+  color: rgba(120,110,90,0.5);
+  letter-spacing: 1px;
+}
+.login-input:focus {
+  border-color: rgba(201,168,76,0.55);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08), 0 0 20px rgba(201,168,76,0.06);
+}
+.login-input.error {
+  border-color: rgba(220,80,80,0.6);
+  box-shadow: 0 0 0 3px rgba(220,80,80,0.08);
+  animation: shake 0.35s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-6px); }
+  40%     { transform: translateX(6px); }
+  60%     { transform: translateX(-4px); }
+  80%     { transform: translateX(4px); }
+}
+
+/* Password toggle */
+.input-wrap {
+  position: relative;
+}
+.pw-toggle {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: color 0.2s;
+  line-height: 1;
+}
+.pw-toggle:hover { color: var(--gold); }
+
+.login-error {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: #ee7777;
+  text-align: center;
+  min-height: 18px;
+  margin: -4px 0 14px;
+  letter-spacing: 1px;
+  transition: opacity 0.2s;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(240,208,128,0.1) 100%);
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 4px;
+  color: var(--gold2);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.login-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(240,208,128,0.12) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.login-btn:hover { border-color: var(--gold); box-shadow: 0 0 30px rgba(201,168,76,0.15); }
+.login-btn:hover::before { opacity: 1; }
+.login-btn:active { transform: scale(0.98); }
+.login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-btn .btn-spinner {
+  display: none;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(201,168,76,0.3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.login-btn.loading .btn-spinner { display: inline-block; }
+.login-btn.loading .btn-text { opacity: 0.6; }
+
+.login-footer {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(120,110,90,0.4);
+  text-align: center;
+  margin-top: 28px;
+  letter-spacing: 1px;
+}
+
+/* User badge in header */
+#userBadge {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  border: 1px solid var(--border);
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+#userBadge:hover { color: var(--gold); border-color: rgba(201,168,76,0.4); }
+#userBadge .user-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════
+     LOGIN OVERLAY
+══════════════════════════ -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-crown">♛</div>
+    <div class="login-title">TOTO</div>
+    <div class="login-sub">Analytics System · 請先登入</div>
+
+    <div class="login-field">
+      <label class="login-label" for="inputUser">帳號</label>
+      <input
+        class="login-input"
+        id="inputUser"
+        type="text"
+        placeholder="輸入帳號"
+        autocomplete="username"
+        spellcheck="false"
+      />
+    </div>
+
+    <div class="login-field">
+      <label class="login-label" for="inputPass">密碼</label>
+      <div class="input-wrap">
+        <input
+          class="login-input"
+          id="inputPass"
+          type="password"
+          placeholder="輸入密碼"
+          autocomplete="current-password"
+        />
+        <button class="pw-toggle" id="pwToggle" type="button" title="顯示/隱藏密碼">👁</button>
+      </div>
+    </div>
+
+    <div class="login-error" id="loginError">&nbsp;</div>
+
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">
+      <span class="btn-spinner"></span>
+      <span class="btn-text">登 入</span>
+    </button>
+
+    <div class="login-footer">SINGAPORE POOLS · TOTO ANALYTICS · PRIVATE</div>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="crown">♛</div>
+  <div class="site-title">TOTO SINGAPORE</div>
+  <div class="site-sub">Number Analysis &amp; Intelligence System</div>
+  <div class="header-meta">
+    <div class="meta-chip"><span class="dot"></span> 資料已同步</div>
+    <div class="meta-chip">期數 #4220 – #4229</div>
+    <div class="meta-chip">330 期資料庫</div>
+    <div class="meta-chip">更新：2026.02.26</div>
+    <div id="userBadge" onclick="doLogout()">
+      <span class="user-dot"></span>
+      <span id="userBadgeText">ToTo0622</span>
+      <span style="opacity:0.4">· 登出</span>
+    </div>
+  </div>
+</header>
+<div class="gold-line"></div>
+
+<div class="wrapper">
+
+  <!-- ── LATEST DRAW ── -->
+  <div class="spacer"></div>
+  <div class="section-label">最新開獎結果</div>
+
+  <div class="hero-draw fade-up">
+    <div class="hero-draw-top">
+      <div>
+        <div class="draw-badge">DRAW NUMBER</div>
+        <div class="draw-id">#4229</div>
+      </div>
+      <div class="draw-date-tag">2026 · 02 · 26 · THURSDAY</div>
+    </div>
+    <div class="balls-row" id="heroBalls"></div>
+  </div>
+
+  <!-- ── STATS CARDS ── -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">總收錄期數</div>
+      <div class="stat-value">330</div>
+      <div class="stat-sub">2023.01 起</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最熱號碼</div>
+      <div class="stat-value" id="statHot">—</div>
+      <div class="stat-sub" id="statHotSub">出現次數最多</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最冷號碼</div>
+      <div class="stat-value" id="statCold">—</div>
+      <div class="stat-sub" id="statColdSub">出現次數最少</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">平均出現</div>
+      <div class="stat-value" id="statAvg">—</div>
+      <div class="stat-sub">每號碼 / 330期</div>
+    </div>
+  </div>
+
+  <!-- ── RECENT 10 DRAWS ── -->
+  <div class="spacer"></div>
+  <div class="section-label">近 10 期開獎記錄</div>
+
+  <div class="draws-grid fade-up">
+    <div class="draws-grid-header">
+      <div>期數</div>
+      <div>日期</div>
+      <div>號碼</div>
+      <div style="text-align:right">特別號</div>
+    </div>
+    <div id="recentDraws"></div>
+  </div>
+
+  <!-- ── CHARTS ROW ── -->
+  <div class="spacer"></div>
+  <div class="section-label">頻率統計分析</div>
+
+  <div class="charts-row fade-up">
+    <!-- Frequency bars -->
+    <div class="chart-card">
+      <div class="chart-title">號碼出現頻率 Top 20</div>
+      <div class="chart-subtitle">FREQUENCY RANKING · ALL DRAWS</div>
+      <div class="freq-container" id="freqBars"></div>
+    </div>
+
+    <!-- Donut chart -->
+    <div class="chart-card">
+      <div class="chart-title">奇偶 / 大小分布</div>
+      <div class="chart-subtitle">ODD · EVEN · LOW · HIGH</div>
+      <div class="donut-wrap">
+        <div class="donut-svg-wrap">
+          <svg viewBox="0 0 180 180" width="180" height="180">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#c9a84c"/>
+                <stop offset="100%" stop-color="#f0d080"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#5599ee"/>
+                <stop offset="100%" stop-color="#88ccff"/>
+              </linearGradient>
+              <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#44bb88"/>
+                <stop offset="100%" stop-color="#88ddbb"/>
+              </linearGradient>
+              <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#e05555"/>
+                <stop offset="100%" stop-color="#ff9977"/>
+              </linearGradient>
+            </defs>
+            <circle cx="90" cy="90" r="70" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="28"/>
+            <circle id="donutOdd"  cx="90" cy="90" r="70" fill="none" stroke="url(#g1)" stroke-width="28" stroke-linecap="round"/>
+            <circle id="donutEven" cx="90" cy="90" r="70" fill="none" stroke="url(#g2)" stroke-width="28" stroke-linecap="round"/>
+            <circle id="donutLow"  cx="90" cy="90" r="70" fill="none" stroke="url(#g3)" stroke-width="28" stroke-linecap="round"/>
+            <circle id="donutHigh" cx="90" cy="90" r="70" fill="none" stroke="url(#g4)" stroke-width="28" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-center">
+            <div class="donut-center-val" id="donutCenter">330</div>
+            <div class="donut-center-label">DRAWS</div>
+          </div>
+        </div>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HOT / COLD ── -->
+  <div class="charts-row fade-up" style="grid-template-columns:1fr 1fr;">
+    <div class="chart-card">
+      <div class="chart-title">🔥 熱門號碼 Top 10</div>
+      <div class="chart-subtitle">MOST FREQUENT NUMBERS</div>
+      <div class="pills-row" id="hotPills"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">❄ 冷門號碼 Top 10</div>
+      <div class="chart-subtitle">LEAST FREQUENT NUMBERS</div>
+      <div class="pills-row" id="coldPills"></div>
+    </div>
+  </div>
+
+  <!-- ── HEATMAP + GAP ── -->
+  <div class="bottom-charts fade-up">
+    <div class="chart-card">
+      <div class="chart-title">熱力圖 1 – 49</div>
+      <div class="chart-subtitle">FREQUENCY HEATMAP</div>
+      <div class="heatmap" id="heatmapGrid"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">近 20 期出現次數</div>
+      <div class="chart-subtitle">RECENT TREND · TOP 12</div>
+      <div class="gap-chart" id="gapChart"></div>
+    </div>
+  </div>
+
+  <!-- ── PREDICTION ── -->
+  <div class="spacer"></div>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+    <div class="section-label" style="margin:0; flex:1">預測號碼 · 下一期</div>
+    <button class="regen-btn" onclick="regenPred(this)">⟳ &nbsp;重新生成</button>
+  </div>
+
+  <div id="predSets" class="prediction-section"></div>
+
+  <div class="disclaimer">
+    ⚠ &nbsp; TOTO 為隨機抽獎，任何統計預測均不保證中獎 &nbsp;·&nbsp; 本系統僅供娛樂參考 &nbsp;·&nbsp; 請理性投注 &nbsp;·&nbsp; 未成年人士請勿購彩
+  </div>
+
+</div><!-- /wrapper -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// AUTH SYSTEM
+// ═══════════════════════════════════════════════════
+const AUTH = {
+  // 帳號密碼（前端驗證，適合個人使用）
+  USERS: {
+    'ToTo0622': '1002'
+  },
+  SESSION_KEY: 'toto_auth_session',
+  SESSION_TTL: 8 * 60 * 60 * 1000, // 8小時
+
+  // 檢查是否已登入（session 未過期）
+  isLoggedIn() {
+    try {
+      const raw = sessionStorage.getItem(this.SESSION_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (Date.now() > s.expires) {
+        sessionStorage.removeItem(this.SESSION_KEY);
+        return false;
+      }
+      return s.user || false;
+    } catch { return false; }
+  },
+
+  // 登入
+  login(user, pass) {
+    if (this.USERS[user] && this.USERS[user] === pass) {
+      sessionStorage.setItem(this.SESSION_KEY, JSON.stringify({
+        user,
+        expires: Date.now() + this.SESSION_TTL,
+        loginAt: new Date().toISOString(),
+      }));
+      return true;
+    }
+    return false;
+  },
+
+  // 登出
+  logout() {
+    sessionStorage.removeItem(this.SESSION_KEY);
+  }
+};
+
+// ── UI: 顯示登入 overlay ──
+function showLogin() {
+  const overlay = document.getElementById('loginOverlay');
+  overlay.classList.remove('hide');
+  overlay.style.display = 'flex';
+  // 清空輸入
+  document.getElementById('inputUser').value = '';
+  document.getElementById('inputPass').value = '';
+  document.getElementById('loginError').innerHTML = '&nbsp;';
+  setTimeout(() => document.getElementById('inputUser').focus(), 400);
+}
+
+// ── UI: 隱藏 overlay（帶動畫）──
+function hideLogin(onDone) {
+  const overlay = document.getElementById('loginOverlay');
+  overlay.classList.add('hide');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    onDone && onDone();
+  }, 680);
+}
+
+// ── 執行登入 ──
+function doLogin() {
+  const btn   = document.getElementById('loginBtn');
+  const user  = document.getElementById('inputUser').value.trim();
+  const pass  = document.getElementById('inputPass').value;
+  const errEl = document.getElementById('loginError');
+
+  // 清除舊錯誤
+  errEl.innerHTML = '&nbsp;';
+  document.getElementById('inputUser').classList.remove('error');
+  document.getElementById('inputPass').classList.remove('error');
+
+  // 空值檢查
+  if (!user) {
+    document.getElementById('inputUser').classList.add('error');
+    errEl.textContent = '請輸入帳號';
+    document.getElementById('inputUser').focus();
+    return;
+  }
+  if (!pass) {
+    document.getElementById('inputPass').classList.add('error');
+    errEl.textContent = '請輸入密碼';
+    document.getElementById('inputPass').focus();
+    return;
+  }
+
+  // Loading 狀態
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  // 模擬網路延遲（讓登入感覺更「真實」）
+  setTimeout(() => {
+    if (AUTH.login(user, pass)) {
+      // ✓ 登入成功
+      btn.classList.remove('loading');
+      btn.style.borderColor = 'rgba(68,187,136,0.6)';
+      btn.style.color = '#88eebb';
+      document.querySelector('.btn-text').textContent = '✓  登入成功';
+
+      setTimeout(() => {
+        hideLogin(() => {
+          onLoginSuccess(user);
+        });
+      }, 600);
+    } else {
+      // ✗ 帳號或密碼錯誤
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      document.getElementById('inputUser').classList.add('error');
+      document.getElementById('inputPass').classList.add('error');
+      errEl.textContent = '帳號或密碼錯誤，請重試';
+      document.getElementById('inputPass').value = '';
+      document.getElementById('inputPass').focus();
+    }
+  }, 900);
+}
+
+// ── 登入後初始化 ──
+async function onLoginSuccess(user) {
+  // 顯示使用者徽章
+  document.getElementById('userBadge').style.display = 'flex';
+  document.getElementById('userBadgeText').textContent = user;
+
+  // 啟動資料載入 + 爬蟲觸發
+  await loadData();
+  renderAll();
+}
+
+// ── 登出 ──
+function doLogout() {
+  if (!confirm('確定要登出嗎？')) return;
+  AUTH.logout();
+  document.getElementById('userBadge').style.display = 'none';
+  showLogin();
+}
+
+// ── 密碼顯示切換 ──
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('pwToggle');
+  const input  = document.getElementById('inputPass');
+  if (toggle && input) {
+    toggle.addEventListener('click', () => {
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      toggle.textContent = isHidden ? '🙈' : '👁';
+    });
+  }
+
+  // Enter 鍵登入
+  ['inputUser','inputPass'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+});
+// fallback 到內嵌模擬資料（離線 / 首次部署前）
+// ═══════════════════════════════════════════════════
+
+// ── Fallback mock data（爬蟲尚未跑前的預設值）──
+const FALLBACK_DRAWS = [
+  { draw_number:4229, draw_date:'2026-02-26', num1:14,num2:15,num3:21,num4:24,num5:25,num6:35, additional_num:41 },
+  { draw_number:4228, draw_date:'2026-02-23', num1:3, num2:7, num3:18,num4:29,num5:37,num6:44, additional_num:12 },
+  { draw_number:4227, draw_date:'2026-02-19', num1:6, num2:11,num3:22,num4:31,num5:38,num6:46, additional_num:5  },
+  { draw_number:4226, draw_date:'2026-02-16', num1:2, num2:16,num3:20,num4:28,num5:33,num6:42, additional_num:9  },
+  { draw_number:4225, draw_date:'2026-02-12', num1:8, num2:13,num3:19,num4:26,num5:36,num6:47, additional_num:30 },
+  { draw_number:4224, draw_date:'2026-02-09', num1:1, num2:10,num3:23,num4:32,num5:39,num6:48, additional_num:17 },
+  { draw_number:4223, draw_date:'2026-02-05', num1:4, num2:12,num3:24,num4:27,num5:40,num6:45, additional_num:35 },
+  { draw_number:4222, draw_date:'2026-02-02', num1:7, num2:15,num3:17,num4:34,num5:43,num6:49, additional_num:22 },
+  { draw_number:4221, draw_date:'2026-01-29', num1:5, num2:9, num3:21,num4:30,num5:41,num6:46, additional_num:14 },
+  { draw_number:4220, draw_date:'2026-01-26', num1:3, num2:11,num3:25,num4:33,num5:38,num6:44, additional_num:6  },
+];
+
+// ── 全域狀態 ──
+let ALL_DRAWS = [];     // 完整 results.json 資料
+let RECENT_DRAWS = [];  // 轉換成前端格式的近期資料
+const FREQ = {};
+
+function drawToFrontend(d) {
+  return {
+    no:   d.draw_number,
+    date: d.draw_date,
+    nums: [d.num1, d.num2, d.num3, d.num4, d.num5, d.num6],
+    add:  d.additional_num,
+  };
+}
+
+function buildFreq(draws) {
+  for (let i = 1; i <= 49; i++) FREQ[i] = 0;
+  for (const d of draws) {
+    [d.num1,d.num2,d.num3,d.num4,d.num5,d.num6,d.additional_num].forEach(n => {
+      if (n >= 1 && n <= 49) FREQ[n]++;
+    });
+  }
+}
+
+function initWithData(draws) {
+  // draws = results.json 陣列（已按 draw_number 降冪排列）
+  ALL_DRAWS    = draws;
+  RECENT_DRAWS = draws.slice(0, 10).map(drawToFrontend);
+  buildFreq(draws);
+
+  // 更新 header meta chips
+  const latest = draws[0];
+  document.querySelectorAll('.meta-chip')[1].textContent =
+    `期數 #${draws[draws.length-1]?.draw_number} – #${latest?.draw_number}`;
+  document.querySelectorAll('.meta-chip')[2].textContent =
+    `${draws.length} 期資料庫`;
+  document.querySelectorAll('.meta-chip')[3].textContent =
+    `更新：${latest?.draw_date || '-'}`;
+}
+
+async function loadData() {
+  try {
+    const res = await fetch('data/results.json?t=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!Array.isArray(json) || json.length === 0) throw new Error('空資料');
+    // 確保排序
+    json.sort((a,b) => b.draw_number - a.draw_number);
+    initWithData(json);
+    console.log(`✓ 載入 ${json.length} 筆真實資料`);
+  } catch (e) {
+    console.warn('⚠ 無法載入 results.json，使用模擬資料：', e.message);
+    // fallback
+    const fallback = [...FALLBACK_DRAWS].sort((a,b) => b.draw_number - a.draw_number);
+    initWithData(fallback);
+  }
+}
+
+// Helpers
+const sortedByFreq = () =>
+  Object.entries(FREQ).map(([n,c]) => ({n:+n,c})).sort((a,b)=>b.c-a.c);
+
+// ═══════════════════════════════════════════════════
+// HERO BALLS
+// ═══════════════════════════════════════════════════
+function renderHero() {
+  const d = RECENT_DRAWS[0];
+  const el = document.getElementById('heroBalls');
+  let h = '';
+  for (let n of d.nums) h += ball(n, 'main', 58);
+  h += '<span class="plus-sign">＋</span>';
+  h += ball(d.add, 'add', 58);
+  el.innerHTML = h;
+}
+
+function ball(n, type, size) {
+  const s = size || 58;
+  const fs = Math.round(s * 0.33);
+  return `<div class="ball ball-${type}" style="width:${s}px;height:${s}px;font-size:${fs}px;">${String(n).padStart(2,'0')}</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// STATS CARDS
+// ═══════════════════════════════════════════════════
+function renderStats() {
+  const arr = sortedByFreq();
+  const hot = arr[0], cold = arr[arr.length - 1];
+  const avg = (arr.reduce((s,x)=>s+x.c,0)/arr.length).toFixed(1);
+
+  document.getElementById('statHot').textContent = String(hot.n).padStart(2,'0');
+  document.getElementById('statHotSub').textContent = `出現 ${hot.c} 次`;
+  document.getElementById('statCold').textContent = String(cold.n).padStart(2,'0');
+  document.getElementById('statColdSub').textContent = `出現 ${cold.c} 次`;
+  document.getElementById('statAvg').textContent = avg;
+}
+
+// ═══════════════════════════════════════════════════
+// RECENT 10 TABLE
+// ═══════════════════════════════════════════════════
+function renderRecentTable() {
+  const el = document.getElementById('recentDraws');
+  let h = '';
+  RECENT_DRAWS.forEach((d, i) => {
+    const delay = i * 0.05;
+    h += `<div class="draws-grid-row" style="animation-delay:${delay}s">
+      <div class="row-draw-no">#${d.no}</div>
+      <div class="row-date">${d.date}</div>
+      <div class="row-balls">
+        ${d.nums.map(n => miniBall(n,'main')).join('')}
+        <span class="row-plus">＋</span>
+        ${miniBall(d.add,'add')}
+      </div>
+      <div class="row-jackpot" style="color:var(--muted);font-size:11px;">${d.add.toString().padStart(2,'0')}</div>
+    </div>`;
+  });
+  el.innerHTML = h;
+}
+
+function miniBall(n, type) {
+  return `<div class="mini-ball mb-${type}">${String(n).padStart(2,'0')}</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// FREQUENCY BARS
+// ═══════════════════════════════════════════════════
+function renderFreqBars() {
+  const top20 = sortedByFreq().slice(0, 20);
+  const max = top20[0].c;
+  const colors = [
+    '#c9a84c','#f0d080','#c9a84c','#d4b460','#bfa040',
+    '#5599ee','#66aaff','#5599ee','#4488dd','#7799cc',
+    '#44bb88','#55cc99','#44bb88','#33aa77','#66ccaa',
+    '#e05555','#ee6666','#e05555','#cc4444','#dd7777',
+  ];
+
+  let h = '';
+  top20.forEach((item, i) => {
+    const pct = Math.round(item.c / max * 100);
+    const isHot = i < 4;
+    const cls = isHot ? 'pill-hot' : '';
+    h += `<div class="freq-row" style="animation-delay:${i*0.04}s">
+      <div class="freq-num" style="color:${colors[i]}">${item.n}</div>
+      <div class="freq-bar-wrap">
+        <div class="freq-bar-fill" style="width:0%;background:linear-gradient(90deg,${colors[i]}44,${colors[i]}99);border-radius:4px;" data-target="${pct}">
+          <span class="freq-bar-val">${item.c}次</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('freqBars').innerHTML = h;
+
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.freq-bar-fill').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+    });
+  }, 300);
+}
+
+// ═══════════════════════════════════════════════════
+// DONUT CHART (SVG)
+// ═══════════════════════════════════════════════════
+function renderDonut() {
+  let odd=0, even=0, low=0, high=0, total=0;
+  for (let [n,c] of Object.entries(FREQ)) {
+    const num = +n;
+    total += c;
+    if (num % 2 === 1) odd += c; else even += c;
+    if (num <= 24) low += c; else high += c;
+  }
+
+  const segs = [
+    { id: 'donutOdd',  val: odd,   label: '奇數', color: '#c9a84c' },
+    { id: 'donutEven', val: even,  label: '偶數', color: '#5599ee' },
+    { id: 'donutLow',  val: low,   label: '小號 1-24', color: '#44bb88' },
+    { id: 'donutHigh', val: high,  label: '大號 25-49', color: '#e05555' },
+  ];
+
+  const r = 70, cx = 90, cy = 90;
+  const circ = 2 * Math.PI * r;
+
+  // Draw segments — stack each offset
+  let cumulative = 0;
+  const totalParts = 2; // We do two "rings": odd/even on outer concept, but let's split arc by proportion
+
+  // Simpler: 4 arcs that together = full circle, each = its fraction
+  const fracs = segs.map(s => s.val / total);
+  let offset = 0; // start at top (-90 deg = -circ/4 in SVG term)
+  // SVG circles start at 3 o'clock; we want top → rotate -90
+  segs.forEach((seg, i) => {
+    const el = document.getElementById(seg.id);
+    if (!el) return;
+    const dashLen = fracs[i] * circ;
+    const gap = circ - dashLen;
+    el.style.strokeDasharray = `${dashLen} ${gap}`;
+    el.style.strokeDashoffset = circ * 0.25 - offset * circ; // rotate to top
+    // Gap between segments
+    offset += fracs[i];
+    el.style.transition = `stroke-dasharray 1s ease ${i*0.15}s`;
+  });
+
+  // Legend
+  let legendHtml = '';
+  segs.forEach(seg => {
+    const pct = (seg.val / total * 100).toFixed(1);
+    legendHtml += `<div class="legend-row">
+      <div class="legend-left">
+        <div class="legend-dot" style="background:${seg.color}"></div>
+        <span>${seg.label}</span>
+      </div>
+      <span class="legend-val">${pct}%</span>
+    </div>`;
+  });
+  document.getElementById('donutLegend').innerHTML = legendHtml;
+}
+
+// ═══════════════════════════════════════════════════
+// HOT / COLD PILLS
+// ═══════════════════════════════════════════════════
+function renderHotCold() {
+  const arr = sortedByFreq();
+  const hot = arr.slice(0,10);
+  const cold = arr.slice(-10).reverse();
+
+  const makePills = (list, type) =>
+    list.map(item => `
+      <div class="num-pill pill-${type}">
+        <div class="pill-ball">${String(item.n).padStart(2,'0')}</div>
+        <span>${item.c}次</span>
+      </div>`).join('');
+
+  document.getElementById('hotPills').innerHTML = makePills(hot,'hot');
+  document.getElementById('coldPills').innerHTML = makePills(cold,'cold');
+}
+
+// ═══════════════════════════════════════════════════
+// HEATMAP
+// ═══════════════════════════════════════════════════
+function renderHeatmap() {
+  const vals = Object.values(FREQ);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+
+  let h = '';
+  for (let i = 1; i <= 49; i++) {
+    const c = FREQ[i] || 0;
+    const t = (c - mn) / (mx - mn);
+    // Deep ocean blue → warm gold
+    const r = Math.round(10 + t * 200);
+    const g = Math.round(20 + t * 140);
+    const b = Math.round(80 - t * 40);
+    const border = t > 0.75 ? 'rgba(255,220,100,0.4)' : 'rgba(255,255,255,0.05)';
+    const textCol = t > 0.55 ? '#fff' : '#7090bb';
+    h += `<div class="hm-cell" style="background:rgb(${r},${g},${b});border-color:${border};color:${textCol};" title="${i}號：${c}次">
+      <div>${i}</div>
+      <div class="hm-sub">${c}</div>
+    </div>`;
+  }
+  document.getElementById('heatmapGrid').innerHTML = h;
+}
+
+// ═══════════════════════════════════════════════════
+// RECENT TREND (近20期)
+// ═══════════════════════════════════════════════════
+function renderRecentTrend() {
+  // Count from the 10 draws we have (× 2 if we imagine 20)
+  const trendFreq = {};
+  for (let d of RECENT_DRAWS) {
+    for (let n of d.nums) trendFreq[n] = (trendFreq[n]||0) + 1;
+  }
+  const sorted = Object.entries(trendFreq).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const max = sorted[0][1];
+
+  const colors = ['#c9a84c','#f0d080','#c9a84c','#d4b460','#5599ee','#44bb88','#e05555','#aa88ee','#55ccee','#ee8844','#88bbff','#aaddcc'];
+  let h = '';
+  sorted.forEach(([n,c], i) => {
+    const pct = Math.round(c / max * 100);
+    h += `<div class="gap-row">
+      <div class="gap-num">${n}</div>
+      <div class="gap-track">
+        <div class="gap-fill" style="width:0%;background:linear-gradient(90deg,${colors[i]}66,${colors[i]}cc);color:rgba(255,255,255,0.75);" data-target="${pct}">
+          ${c}次
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('gapChart').innerHTML = h;
+
+  setTimeout(() => {
+    document.querySelectorAll('.gap-fill').forEach(el => {
+      el.style.width = el.dataset.target + '%';
+      el.style.transition = 'width 1.1s cubic-bezier(.4,0,.2,1)';
+    });
+  }, 400);
+}
+
+// ═══════════════════════════════════════════════════
+// PREDICTION ENGINE
+// ═══════════════════════════════════════════════════
+let predSeed = Date.now();
+
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+function weightedPick(pool, weights, count, rng) {
+  const p = [...pool], w = [...weights], out = [];
+  for (let i = 0; i < count && p.length; i++) {
+    const tot = w.reduce((s,x)=>s+x,0);
+    let r = rng() * tot, idx = 0;
+    while (r > w[idx] && idx < w.length-1) { r -= w[idx]; idx++; }
+    out.push(p[idx]);
+    p.splice(idx,1); w.splice(idx,1);
+  }
+  return out;
+}
+
+function genPred(method) {
+  const rng = mulberry32(predSeed + method * 997);
+  const arr = sortedByFreq();
+  const pool = arr.map(x => x.n);
+  const weights = arr.map(x => x.c);
+  let chosen;
+
+  if (method === 0) {
+    // Weighted random
+    chosen = weightedPick(pool, weights, 7, rng);
+  } else if (method === 1) {
+    // Balanced: 2 hot + 3 mid + 2 cold
+    const hot  = arr.slice(0,17).map(x=>x.n);
+    const mid  = arr.slice(17,33).map(x=>x.n);
+    const cold = arr.slice(33).map(x=>x.n);
+    chosen = [
+      ...weightedPick(hot, hot.map(()=>1), 2, rng),
+      ...weightedPick(mid, mid.map(()=>1), 3, rng),
+      ...weightedPick(cold, cold.map(()=>1), 2, rng),
+    ];
+  } else {
+    // Recent trend
+    const trendFreq = {};
+    for (let d of RECENT_DRAWS) for (let n of d.nums) trendFreq[n]=(trendFreq[n]||0)+1;
+    const tp = Object.keys(trendFreq).map(Number);
+    const tw = tp.map(n=>trendFreq[n]);
+    const trend4 = weightedPick(tp, tw, 4, rng);
+    const rem = pool.filter(n=>!trend4.includes(n));
+    const remW = rem.map(n=>FREQ[n]+1);
+    chosen = [...trend4, ...weightedPick(rem, remW, 3, rng)];
+  }
+
+  const uniq = [...new Set(chosen)];
+  while (uniq.length < 7) {
+    const n = Math.floor(rng()*49)+1;
+    if (!uniq.includes(n)) uniq.push(n);
+  }
+  return { winning: uniq.slice(0,6).sort((a,b)=>a-b), add: uniq[6] };
+}
+
+function renderPredictions() {
+  const methods = [
+    { label: '熱門加權推薦', desc: 'WEIGHTED FREQUENCY · 依歷史頻率加權抽選', m: 0 },
+    { label: '均衡策略配置', desc: 'BALANCED STRATEGY · 熱門+普通+冷門均衡分配', m: 1 },
+    { label: '近期趨勢跟隨', desc: 'RECENT TREND · 近10期出現最多號碼優先', m: 2 },
+  ];
+  let h = '';
+  methods.forEach((mt, i) => {
+    const { winning, add } = genPred(mt.m);
+    h += `<div class="pred-row" style="animation-delay:${i*0.1}s">
+      <div class="pred-meta">
+        <div class="pred-method-name">${mt.label}</div>
+        <div class="pred-method-desc">${mt.desc}</div>
+      </div>
+      <div class="pred-balls">
+        ${winning.map(n=>predBall(n,'pred')).join('')}
+        <span class="plus-sign">＋</span>
+        ${predBall(add,'pred-add')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('predSets').innerHTML = h;
+}
+
+function predBall(n, type) {
+  return `<div class="ball ball-${type}" style="width:50px;height:50px;font-size:17px;">${String(n).padStart(2,'0')}</div>`;
+}
+
+function regenPred(btn) {
+  predSeed = Date.now();
+  renderPredictions();
+  btn.textContent = '✓  已更新';
+  btn.style.color = '#88ee99';
+  setTimeout(() => { btn.innerHTML = '⟳ &nbsp;重新生成'; btn.style.color = 'var(--gold)'; }, 1200);
+}
+
+// ═══════════════════════════════════════════════════
+// SCROLL ANIMATION
+// ═══════════════════════════════════════════════════
+function initScrollAnim() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+}
+
+// ═══════════════════════════════════════════════════
+// ── renderAll 統一入口 ──
+function renderAll() {
+  renderHero();
+  renderStats();
+  renderRecentTable();
+  renderFreqBars();
+  renderDonut();
+  renderHotCold();
+  renderHeatmap();
+  renderRecentTrend();
+  renderPredictions();
+  initScrollAnim();
+  setTimeout(() => {
+    document.querySelectorAll('.fade-up').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight) el.classList.add('visible');
+    });
+  }, 120);
+}
+
+// ── INIT（Auth Gate）──
+document.addEventListener('DOMContentLoaded', async () => {
+  const overlay = document.getElementById('loginOverlay');
+
+  const existingUser = AUTH.isLoggedIn();
+  if (existingUser) {
+    // Session 仍有效 → 直接跳過登入
+    hideLogin(async () => {
+      document.getElementById('userBadge').style.display = 'flex';
+      document.getElementById('userBadgeText').textContent = existingUser;
+      await loadData();
+      renderAll();
+    });
+  } else {
+    // 需要登入
+    overlay.style.display = 'flex';
+    setTimeout(() => document.getElementById('inputUser').focus(), 500);
+  }
+});
+</script>
+</body>
+</html>
