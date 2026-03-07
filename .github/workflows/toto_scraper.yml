@@ -28,4 +28,4 @@ jobs:
       - name: Run scraper
         run: |
           echo "Running TOTO scraper..."
-          python backend/scraper.py
+          python scraper/scraper.py
