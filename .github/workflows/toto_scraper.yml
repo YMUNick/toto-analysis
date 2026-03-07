@@ -1,0 +1,31 @@
+name: 🎱 TOTO Scraper
+
+on:
+  workflow_dispatch:
+    inputs:
+      full_scrape:
+        description: "是否全量重新爬取"
+        required: false
+        default: "false"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 pandas
+
+      - name: Run scraper
+        run: |
+          echo "Running TOTO scraper..."
+          python backend/scraper.py
