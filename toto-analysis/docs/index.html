@@ -1277,7 +1277,7 @@ header {
     <!-- Frequency bars -->
     <div class="chart-card">
       <div class="chart-title">號碼出現頻率 Top 20</div>
-      <div class="chart-subtitle">FREQUENCY RANKING · ALL DRAWS</div>
+      <div class="chart-subtitle" id="subtitleFreq">FREQUENCY RANKING · ALL DRAWS</div>
       <div class="freq-container" id="freqBars"></div>
     </div>
 
@@ -1326,12 +1326,12 @@ header {
   <div class="charts-row fade-up" style="grid-template-columns:1fr 1fr;">
     <div class="chart-card">
       <div class="chart-title">🔥 熱門號碼 Top 10</div>
-      <div class="chart-subtitle">MOST FREQUENT NUMBERS</div>
+      <div class="chart-subtitle" id="subtitleHot">MOST FREQUENT NUMBERS</div>
       <div class="pills-row" id="hotPills"></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">❄ 冷門號碼 Top 10</div>
-      <div class="chart-subtitle">LEAST FREQUENT NUMBERS</div>
+      <div class="chart-subtitle" id="subtitleCold">LEAST FREQUENT NUMBERS</div>
       <div class="pills-row" id="coldPills"></div>
     </div>
   </div>
@@ -1340,12 +1340,12 @@ header {
   <div class="bottom-charts fade-up">
     <div class="chart-card">
       <div class="chart-title">熱力圖 1 – 49</div>
-      <div class="chart-subtitle">FREQUENCY HEATMAP</div>
+      <div class="chart-subtitle" id="subtitleHeatmap">FREQUENCY HEATMAP</div>
       <div class="heatmap" id="heatmapGrid"></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">近 20 期出現次數</div>
-      <div class="chart-subtitle">RECENT TREND · TOP 12</div>
+      <div class="chart-subtitle">RECENT 20 DRAWS · TOP 12</div>
       <div class="gap-chart" id="gapChart"></div>
     </div>
   </div>
@@ -1574,13 +1574,28 @@ function initWithData(draws) {
   buildFreq(draws);
 
   // 更新 header meta chips
-  const latest = draws[0];
+  const latest  = draws[0];
+  const oldest  = draws[draws.length - 1];
+  const oldYear = oldest?.draw_date?.slice(0, 4) || '—';
+  const newYear = latest?.draw_date?.slice(0, 4) || '—';
+  const yearRange = oldYear === newYear ? oldYear : `${oldYear}–${newYear}`;
+
   document.querySelectorAll('.meta-chip')[1].textContent =
-    `期數 #${draws[draws.length-1]?.draw_number} – #${latest?.draw_number}`;
+    `期數 #${oldest?.draw_number} – #${latest?.draw_number}`;
   document.querySelectorAll('.meta-chip')[2].textContent =
     `${draws.length} 期資料庫`;
   document.querySelectorAll('.meta-chip')[3].textContent =
     `更新：${latest?.draw_date || '-'}`;
+
+  // Update chart subtitles with year range
+  document.getElementById('subtitleFreq').textContent =
+    `FREQUENCY RANKING · ${yearRange} · ${draws.length} DRAWS`;
+  document.getElementById('subtitleHeatmap').textContent =
+    `FREQUENCY HEATMAP · ${yearRange} · ALL ${draws.length} DRAWS`;
+  document.getElementById('subtitleHot').textContent =
+    `MOST FREQUENT · ${yearRange}`;
+  document.getElementById('subtitleCold').textContent =
+    `LEAST FREQUENT · ${yearRange}`;
 }
 
 async function loadData() {
@@ -1813,9 +1828,9 @@ function renderHeatmap() {
 // RECENT TREND (近20期)
 // ═══════════════════════════════════════════════════
 function renderRecentTrend() {
-  // Count from the 10 draws we have (× 2 if we imagine 20)
+  const recent20 = ALL_DRAWS.slice(0, 20).map(drawToFrontend);
   const trendFreq = {};
-  for (let d of RECENT_DRAWS) {
+  for (let d of recent20) {
     for (let n of d.nums) trendFreq[n] = (trendFreq[n]||0) + 1;
   }
   const sorted = Object.entries(trendFreq).sort((a,b)=>b[1]-a[1]).slice(0,12);
@@ -1893,7 +1908,7 @@ function genPred(method) {
   } else {
     // Recent trend
     const trendFreq = {};
-    for (let d of RECENT_DRAWS) for (let n of d.nums) trendFreq[n]=(trendFreq[n]||0)+1;
+    for (let d of ALL_DRAWS.slice(0,20).map(drawToFrontend)) for (let n of d.nums) trendFreq[n]=(trendFreq[n]||0)+1;
     const tp = Object.keys(trendFreq).map(Number);
     const tw = tp.map(n=>trendFreq[n]);
     const trend4 = weightedPick(tp, tw, 4, rng);
