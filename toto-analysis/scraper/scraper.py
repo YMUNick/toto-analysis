@@ -96,6 +96,14 @@ def parse_draw_from_text(text: str, draw_no: int) -> dict | None:
     """Extract draw result from rendered page text."""
     tu = text.upper()
 
+    # ── Validate draw number on page matches requested ──
+    page_no_match = re.search(r'Draw\s*No\.?\s*(\d+)', text, re.I)
+    if page_no_match:
+        page_no = int(page_no_match.group(1))
+        if page_no != draw_no:
+            log.debug(f"#{draw_no}: page shows draw #{page_no}, skipping")
+            return None
+
     # ── Date ──
     date_match = (
         re.search(r'(\w{3},\s+\d{1,2}\s+\w{3}\s+\d{4})', text) or
