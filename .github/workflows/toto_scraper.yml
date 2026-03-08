@@ -1,16 +1,21 @@
 name: 🎱 TOTO Scraper
 
 on:
+  schedule:
+    - cron: "30 14 * * 1"   # Monday 14:30 UTC
+    - cron: "30 14 * * 4"   # Thursday 14:30 UTC
+
   workflow_dispatch:
     inputs:
       full_scrape:
-        description: "是否全量重新爬取"
+        description: "Full refresh from 2024 (first-time setup)"
         required: false
         default: "false"
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     permissions:
       contents: write
@@ -25,13 +30,20 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: |
-          pip install -r toto-analysis/scraper/requirements.txt
+        run: pip install -r toto-analysis/scraper/requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install chromium --with-deps
 
       - name: Run scraper
         run: |
-          echo "Running TOTO scraper..."
-          python toto-analysis/scraper/scraper.py
+          if [ "${{ github.event.inputs.full_scrape }}" = "true" ]; then
+            echo "Running full refresh..."
+            python toto-analysis/scraper/scraper.py --full
+          else
+            echo "Running incremental update..."
+            python toto-analysis/scraper/scraper.py
+          fi
 
       - name: Commit & push data
         run: |

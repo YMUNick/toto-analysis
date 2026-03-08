@@ -1,31 +1,30 @@
 """
 TOTO Singapore Scraper
 ======================
-目標：爬取第三方彙整網站的 TOTO 開獎結果
-優先來源：
-  1. https://www.lottery.sg/toto/results   (結構清晰)
-  2. https://singaporetoto.net             (備援)
-  3. https://www.toto.com.sg              (備援)
+Scrapes draw results directly from Singapore Pools official website
+using Playwright (headless browser) to handle JavaScript rendering.
 
-流程：
-  1. 讀取現有 data/results.json
-  2. 找出最新已有期數
-  3. 爬取新資料並補齊
-  4. 存回 data/results.json
-  5. 更新 data/meta.json (更新時間、統計摘要)
+Draw URL format:
+  https://www.singaporepools.com.sg/en/product/sr/Pages/toto_results.aspx
+  ?sppl=base64("DrawNumber=XXXX")
+
+Usage:
+  python scraper.py           # incremental (latest draws only)
+  python scraper.py --full    # full refresh from 2024 onwards
 """
 
+import base64
 import json
-import time
-import random
 import logging
+import random
 import re
-from datetime import datetime, date
+import sys
+import time
+from datetime import datetime
 from pathlib import Path
-import requests
-from bs4 import BeautifulSoup
 
-# ── 設定 ────────────────────────────────────────────
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -33,62 +32,36 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-DATA_DIR   = Path(__file__).parent.parent / "data"
-RESULTS_F  = DATA_DIR / "results.json"
-META_F     = DATA_DIR / "meta.json"
+DATA_DIR  = Path(__file__).parent.parent / "data"
+RESULTS_F = DATA_DIR / "results.json"
+META_F    = DATA_DIR / "meta.json"
 
-# 模擬真實瀏覽器 headers（降低被擋機率）
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/122.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9,zh-TW;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-}
+BASE_URL  = "https://www.singaporepools.com.sg/en/product/sr/Pages/toto_results.aspx"
 
-SESSION = requests.Session()
-SESSION.headers.update(HEADERS)
+# Earliest draw to fetch in full-refresh mode (~Jan 2024)
+FULL_REFRESH_FROM = 3938
 
-# ── 資料模型 ─────────────────────────────────────────
-def make_draw(draw_number: int, draw_date: str,
-              nums: list[int], additional: int) -> dict:
-    nums_sorted = sorted(nums)
-    return {
-        "draw_number":     draw_number,
-        "draw_date":       draw_date,       # "YYYY-MM-DD"
-        "num1":            nums_sorted[0],
-        "num2":            nums_sorted[1],
-        "num3":            nums_sorted[2],
-        "num4":            nums_sorted[3],
-        "num5":            nums_sorted[4],
-        "num6":            nums_sorted[5],
-        "additional_num":  additional,
-    }
 
-# ── 工具函式 ─────────────────────────────────────────
-def sleep_random(lo=1.5, hi=3.5):
-    """禮貌性延遲，避免對伺服器造成壓力"""
-    time.sleep(random.uniform(lo, hi))
+# ── URL helpers ─────────────────────────────────────────────────────────────
 
-def safe_get(url: str, timeout=15) -> requests.Response | None:
-    try:
-        resp = SESSION.get(url, timeout=timeout)
-        resp.raise_for_status()
-        return resp
-    except requests.RequestException as e:
-        log.warning(f"GET {url} 失敗: {e}")
-        return None
+def draw_url(draw_no: int) -> str:
+    encoded = base64.b64encode(f"DrawNumber={draw_no}".encode()).decode()
+    return f"{BASE_URL}?sppl={encoded}"
+
+
+# ── Date parsing ─────────────────────────────────────────────────────────────
 
 def parse_date(raw: str) -> str | None:
-    """嘗試多種日期格式，回傳 YYYY-MM-DD"""
+    """Return YYYY-MM-DD or None."""
     formats = [
-        "%d %b %Y", "%d/%m/%Y", "%Y-%m-%d",
-        "%d-%m-%Y", "%B %d, %Y", "%d %B %Y",
+        "%a, %d %b %Y",   # Thu, 05 Mar 2026
+        "%A, %d %B %Y",   # Thursday, 05 March 2026
+        "%d %b %Y",        # 05 Mar 2026
+        "%d/%m/%Y",
+        "%Y-%m-%d",
+        "%d-%m-%Y",
+        "%B %d, %Y",
+        "%d %B %Y",
     ]
     raw = raw.strip()
     for fmt in formats:
@@ -98,208 +71,142 @@ def parse_date(raw: str) -> str | None:
             continue
     return None
 
-# ══════════════════════════════════════════════════════
-# 來源 1：lottery.sg
-# ══════════════════════════════════════════════════════
-def scrape_lottery_sg(max_pages=10) -> list[dict]:
-    """
-    lottery.sg 分頁結構：
-    https://www.lottery.sg/toto/results?page=1
-    每頁約 10 筆，表格 <table class="result-table">
-    """
+
+# ── Data model ───────────────────────────────────────────────────────────────
+
+def make_draw(draw_number: int, draw_date: str,
+              nums: list[int], additional: int) -> dict:
+    nums_sorted = sorted(nums)
+    return {
+        "draw_number":    draw_number,
+        "draw_date":      draw_date,
+        "num1":           nums_sorted[0],
+        "num2":           nums_sorted[1],
+        "num3":           nums_sorted[2],
+        "num4":           nums_sorted[3],
+        "num5":           nums_sorted[4],
+        "num6":           nums_sorted[5],
+        "additional_num": additional,
+    }
+
+
+# ── Page text parser ──────────────────────────────────────────────────────────
+
+def parse_draw_from_text(text: str, draw_no: int) -> dict | None:
+    """Extract draw result from rendered page text."""
+    tu = text.upper()
+
+    # ── Date ──
+    date_match = (
+        re.search(r'(\w{3},\s+\d{1,2}\s+\w{3}\s+\d{4})', text) or
+        re.search(r'(\w+day,\s+\d{1,2}\s+\w+\s+\d{4})', text) or
+        re.search(r'(\d{1,2}\s+\w+\s+\d{4})', text)
+    )
+    if not date_match:
+        log.debug(f"#{draw_no}: no date found")
+        return None
+    draw_date = parse_date(date_match.group(1))
+    if not draw_date:
+        log.debug(f"#{draw_no}: unparseable date '{date_match.group(1)}'")
+        return None
+
+    # ── Winning numbers + additional ──
+    win_idx = tu.find("WINNING NUMBER")
+    add_idx = tu.find("ADDITIONAL NUMBER")
+
+    if win_idx == -1 or add_idx == -1 or win_idx >= add_idx:
+        log.debug(f"#{draw_no}: can't locate number sections")
+        return None
+
+    win_section = text[win_idx:add_idx]
+    add_section = text[add_idx: add_idx + 80]
+
+    def extract_valid_nums(s: str) -> list[int]:
+        return [int(x) for x in re.findall(r'\b(\d{1,2})\b', s)
+                if 1 <= int(x) <= 49]
+
+    win_nums = extract_valid_nums(win_section)
+    add_nums = extract_valid_nums(add_section)
+
+    if len(win_nums) < 6 or not add_nums:
+        log.debug(f"#{draw_no}: not enough numbers (win={win_nums}, add={add_nums})")
+        return None
+
+    return make_draw(draw_no, draw_date, win_nums[:6], add_nums[0])
+
+
+# ── Main scraper ──────────────────────────────────────────────────────────────
+
+def scrape_draws(draw_numbers: list[int]) -> list[dict]:
+    """Fetch a list of draw numbers from Singapore Pools using Playwright."""
     results = []
-    base_url = "https://www.lottery.sg/toto/results"
 
-    for page in range(1, max_pages + 1):
-        url = f"{base_url}?page={page}"
-        log.info(f"[lottery.sg] 抓取第 {page} 頁：{url}")
-        resp = safe_get(url)
-        if not resp:
-            break
-
-        soup = BeautifulSoup(resp.text, "lxml")
-
-        # 找結果表格
-        table = soup.find("table", {"class": re.compile(r"result", re.I)})
-        if not table:
-            # 嘗試通用 table
-            table = soup.find("table")
-        if not table:
-            log.warning(f"[lottery.sg] 第 {page} 頁找不到表格，停止")
-            break
-
-        rows = table.find_all("tr")[1:]  # 跳過 header
-        if not rows:
-            log.info(f"[lottery.sg] 第 {page} 頁無資料，結束")
-            break
-
-        for row in rows:
-            cells = row.find_all(["td", "th"])
-            if len(cells) < 4:
-                continue
-            try:
-                draw_no   = int(re.sub(r"\D", "", cells[0].get_text()))
-                draw_date = parse_date(cells[1].get_text(strip=True))
-                # 號碼通常在同一格，以空格或逗號分隔
-                num_text  = cells[2].get_text(separator=" ", strip=True)
-                all_nums  = [int(x) for x in re.findall(r"\b([1-9]|[1-3][0-9]|4[0-9])\b", num_text)]
-                add_text  = cells[3].get_text(strip=True)
-                add_num   = int(re.sub(r"\D", "", add_text))
-
-                if len(all_nums) < 6 or not draw_date:
-                    continue
-
-                results.append(make_draw(draw_no, draw_date, all_nums[:6], add_num))
-            except (ValueError, IndexError) as e:
-                log.debug(f"[lottery.sg] 解析列失敗: {e}")
-                continue
-
-        sleep_random()
-
-        # 偵測是否有下一頁
-        next_btn = soup.find("a", string=re.compile(r"next|›|»", re.I))
-        if not next_btn:
-            log.info("[lottery.sg] 已達最後一頁")
-            break
-
-    log.info(f"[lottery.sg] 共抓到 {len(results)} 筆")
-    return results
-
-
-# ══════════════════════════════════════════════════════
-# 來源 2：singaporetoto.net（備援）
-# ══════════════════════════════════════════════════════
-def scrape_singaporetoto_net(max_pages=10) -> list[dict]:
-    """
-    singaporetoto.net 結構：
-    https://www.singaporetoto.net/results/page/1/
-    <div class="toto-result"> 內有期數、日期、號碼
-    """
-    results = []
-    base_url = "https://www.singaporetoto.net/results/page"
-
-    for page in range(1, max_pages + 1):
-        url = f"{base_url}/{page}/"
-        log.info(f"[singaporetoto.net] 抓取第 {page} 頁")
-        resp = safe_get(url)
-        if not resp:
-            break
-
-        soup = BeautifulSoup(resp.text, "lxml")
-        blocks = soup.find_all("div", {"class": re.compile(r"toto.?result|result.?block", re.I)})
-
-        if not blocks:
-            # 嘗試 article 標籤
-            blocks = soup.find_all("article")
-
-        if not blocks:
-            log.warning(f"[singaporetoto.net] 第 {page} 頁找不到資料區塊")
-            break
-
-        for block in blocks:
-            try:
-                text = block.get_text(separator="\n")
-                # 抓期數
-                m_no = re.search(r"Draw\s*[:#]?\s*(\d{4,5})", text, re.I)
-                # 抓日期
-                m_date = re.search(
-                    r"(\d{1,2}\s+\w+\s+\d{4}|\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})",
-                    text
-                )
-                # 抓號碼（6 個主號碼 + 1 個特別號）
-                all_nums = [int(x) for x in re.findall(r"\b([1-9]|[1-3][0-9]|4[0-9])\b", text)]
-
-                if not m_no or not m_date or len(all_nums) < 7:
-                    continue
-
-                draw_no   = int(m_no.group(1))
-                draw_date = parse_date(m_date.group(1))
-                if not draw_date:
-                    continue
-
-                results.append(make_draw(draw_no, draw_date, all_nums[:6], all_nums[6]))
-            except Exception as e:
-                log.debug(f"[singaporetoto.net] 解析區塊失敗: {e}")
-
-        sleep_random()
-
-        if not soup.find("a", string=re.compile(r"next|older|»", re.I)):
-            break
-
-    log.info(f"[singaporetoto.net] 共抓到 {len(results)} 筆")
-    return results
-
-
-# ══════════════════════════════════════════════════════
-# 來源 3：Singapore Pools 官方 JSON API（最穩定）
-# ══════════════════════════════════════════════════════
-def scrape_pools_api(draw_from: int = None, draw_to: int = None) -> list[dict]:
-    """
-    Singapore Pools 有非官方的 JSON endpoint，有時可直接存取：
-    https://www.singaporepools.com.sg/DataFileArchive/Lottery/Output/toto_Result_draw_[DRAWNO].json
-    
-    另一個較穩定的端點：
-    https://www.singaporepools.com.sg/en/product/sr/Pages/toto_results.aspx
-    
-    這裡嘗試非官方 JSON endpoint
-    """
-    results = []
-    if not draw_from:
-        return results
-
-    for draw_no in range(draw_from, (draw_to or draw_from) + 1):
-        url = (
-            f"https://www.singaporepools.com.sg/DataFileArchive/Lottery/"
-            f"Output/toto_Result_draw_{draw_no}.json"
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        context = browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/122.0.0.0 Safari/537.36"
+            ),
+            locale="en-US",
         )
-        resp = safe_get(url)
-        if not resp:
-            continue
+        page = context.new_page()
 
-        try:
-            data = resp.json()
-            # 官方 JSON 結構（如存在）：
-            # { "DrawNumber": 4229, "DrawDate": "26 Feb 2026",
-            #   "WinningNumbers": [14,15,21,24,25,35], "AdditionalNumber": 41 }
-            draw_date = parse_date(data.get("DrawDate", ""))
-            nums      = data.get("WinningNumbers", [])
-            add       = data.get("AdditionalNumber", 0)
+        for draw_no in draw_numbers:
+            url = draw_url(draw_no)
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+                # Wait for draw number element indicating results are loaded
+                page.wait_for_selector(".drawNumber, #drawNumber", timeout=15_000)
 
-            if draw_date and len(nums) == 6 and add:
-                results.append(make_draw(draw_no, draw_date, nums, add))
-                log.info(f"[pools_api] 取得 #{draw_no}")
-        except Exception as e:
-            log.debug(f"[pools_api] #{draw_no} 解析失敗: {e}")
+                text = page.inner_text("body")
+                draw = parse_draw_from_text(text, draw_no)
 
-        sleep_random(0.5, 1.2)
+                if draw:
+                    results.append(draw)
+                    log.info(f"✓ #{draw_no} {draw['draw_date']}  "
+                             f"{draw['num1']},{draw['num2']},{draw['num3']},"
+                             f"{draw['num4']},{draw['num5']},{draw['num6']}  "
+                             f"+{draw['additional_num']}")
+                else:
+                    log.warning(f"✗ #{draw_no}: parsed nothing")
+
+            except PlaywrightTimeout:
+                log.warning(f"✗ #{draw_no}: timeout (draw may not exist)")
+            except Exception as e:
+                log.warning(f"✗ #{draw_no}: {e}")
+
+            time.sleep(random.uniform(1.0, 2.0))
+
+        browser.close()
 
     return results
 
 
-# ══════════════════════════════════════════════════════
-# 主流程
-# ══════════════════════════════════════════════════════
+# ── Persistence ───────────────────────────────────────────────────────────────
+
 def load_existing() -> list[dict]:
     DATA_DIR.mkdir(exist_ok=True)
     if RESULTS_F.exists():
-        with open(RESULTS_F, "r", encoding="utf-8") as f:
+        with open(RESULTS_F, encoding="utf-8") as f:
             return json.load(f)
     return []
+
 
 def save_results(draws: list[dict]):
     draws_sorted = sorted(draws, key=lambda d: d["draw_number"], reverse=True)
     with open(RESULTS_F, "w", encoding="utf-8") as f:
         json.dump(draws_sorted, f, ensure_ascii=False, indent=2)
-    log.info(f"已儲存 {len(draws_sorted)} 筆到 {RESULTS_F}")
+    log.info(f"Saved {len(draws_sorted)} draws → {RESULTS_F}")
+
 
 def save_meta(draws: list[dict]):
     if not draws:
         return
-
-    # 計算頻率
     freq = {i: 0 for i in range(1, 50)}
     for d in draws:
-        for k in ["num1","num2","num3","num4","num5","num6","additional_num"]:
+        for k in ["num1", "num2", "num3", "num4", "num5", "num6", "additional_num"]:
             n = d.get(k)
             if n and 1 <= n <= 49:
                 freq[n] += 1
@@ -308,22 +215,22 @@ def save_meta(draws: list[dict]):
     draws_sorted = sorted(draws, key=lambda d: d["draw_number"], reverse=True)
 
     meta = {
-        "last_updated":   datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "total_draws":    len(draws),
-        "latest_draw":    draws_sorted[0]["draw_number"],
-        "latest_date":    draws_sorted[0]["draw_date"],
-        "oldest_draw":    draws_sorted[-1]["draw_number"],
-        "oldest_date":    draws_sorted[-1]["draw_date"],
-        "hot_numbers":    [{"num": n, "count": c} for n, c in sorted_freq[:10]],
-        "cold_numbers":   [{"num": n, "count": c} for n, c in sorted_freq[-10:]],
-        "frequency":      {str(n): c for n, c in freq.items()},
+        "last_updated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "total_draws":  len(draws),
+        "latest_draw":  draws_sorted[0]["draw_number"],
+        "latest_date":  draws_sorted[0]["draw_date"],
+        "oldest_draw":  draws_sorted[-1]["draw_number"],
+        "oldest_date":  draws_sorted[-1]["draw_date"],
+        "hot_numbers":  [{"num": n, "count": c} for n, c in sorted_freq[:10]],
+        "cold_numbers": [{"num": n, "count": c} for n, c in sorted_freq[-10:]],
+        "frequency":    {str(n): c for n, c in freq.items()},
     }
     with open(META_F, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
-    log.info(f"已更新 meta.json（最新期：#{meta['latest_draw']}）")
+    log.info(f"Updated meta.json (latest: #{meta['latest_draw']})")
+
 
 def merge_draws(existing: list[dict], new_draws: list[dict]) -> tuple[list[dict], int]:
-    """合併，去除重複，回傳合併後列表與新增筆數"""
     existing_map = {d["draw_number"]: d for d in existing}
     added = 0
     for d in new_draws:
@@ -332,58 +239,47 @@ def merge_draws(existing: list[dict], new_draws: list[dict]) -> tuple[list[dict]
             added += 1
     return list(existing_map.values()), added
 
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
 def run_scraper(full_refresh: bool = False):
-    log.info("═══ TOTO Scraper 啟動 ═══")
+    log.info("═══ TOTO Scraper Start ═══")
 
-    existing = load_existing()
-    latest_no = max((d["draw_number"] for d in existing), default=0) if existing else 0
-    log.info(f"現有資料：{len(existing)} 筆，最新期數：#{latest_no}")
+    existing  = load_existing()
+    known_nos = {d["draw_number"] for d in existing}
+    latest_no = max(known_nos, default=0)
+    log.info(f"Existing data: {len(existing)} draws, latest #{latest_no}")
 
-    all_new: list[dict] = []
-
-    # ── 策略：優先爬第三方網站，只抓比現有新的資料 ──
-    # 若是全量刷新（首次執行）就多抓幾頁
-    pages = 50 if full_refresh else 3
-
-    log.info("── 嘗試來源 1：lottery.sg ──")
-    src1 = scrape_lottery_sg(max_pages=pages)
-    if src1:
-        all_new.extend(src1)
-        log.info(f"來源1 取得 {len(src1)} 筆")
+    if full_refresh:
+        # Fetch everything from FULL_REFRESH_FROM up to latest+5
+        target_from = FULL_REFRESH_FROM
+        target_to   = max(latest_no + 5, target_from + 5)
+        draw_numbers = [n for n in range(target_to, target_from - 1, -1)
+                        if n not in known_nos]
+        log.info(f"Full refresh: {len(draw_numbers)} draws to fetch "
+                 f"(#{target_from}–#{target_to})")
     else:
-        log.warning("來源1 失敗，嘗試備援...")
-        sleep_random(2, 4)
+        # Incremental: try the 10 draws after the latest known
+        target_from = latest_no + 1 if latest_no else 4150
+        target_to   = target_from + 9
+        draw_numbers = list(range(target_to, target_from - 1, -1))
+        log.info(f"Incremental: checking #{target_from}–#{target_to}")
 
-        log.info("── 嘗試來源 2：singaporetoto.net ──")
-        src2 = scrape_singaporetoto_net(max_pages=pages)
-        if src2:
-            all_new.extend(src2)
-            log.info(f"來源2 取得 {len(src2)} 筆")
-        else:
-            log.warning("來源2 也失敗，嘗試官方 API...")
-
-            # 推測最近幾期號碼
-            if latest_no > 0:
-                log.info(f"── 嘗試來源 3：官方 API（#{latest_no+1} 起）──")
-                src3 = scrape_pools_api(latest_no + 1, latest_no + 10)
-                all_new.extend(src3)
-
-    # ── 合併去重 ──
-    merged, added = merge_draws(existing, all_new)
-    log.info(f"新增 {added} 筆，總計 {len(merged)} 筆")
+    new_draws = scrape_draws(draw_numbers)
+    merged, added = merge_draws(existing, new_draws)
+    log.info(f"Added {added} new draws, total {len(merged)}")
 
     if added > 0 or not existing:
         save_results(merged)
         save_meta(merged)
-        log.info("✓ 資料已更新")
+        log.info("✓ Data updated")
     else:
-        log.info("資料已是最新，無需更新")
+        log.info("No new data")
 
-    log.info("═══ 完成 ═══")
+    log.info("═══ Done ═══")
     return added
 
 
 if __name__ == "__main__":
-    import sys
     full = "--full" in sys.argv
     run_scraper(full_refresh=full)
