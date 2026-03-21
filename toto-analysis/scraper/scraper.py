@@ -119,12 +119,15 @@ def parse_draw_from_text(text: str, draw_no: int) -> dict | None:
         return None
 
     # ── Winning numbers + additional ──
-    win_idx = tu.find("WINNING NUMBER")
-    add_idx = tu.find("ADDITIONAL NUMBER")
+    win_match = re.search(r'WINNING\s+NUMBERS?', tu)
+    add_match = re.search(r'ADDITIONAL\s+NUMBERS?', tu)
 
-    if win_idx == -1 or add_idx == -1 or win_idx >= add_idx:
+    if not win_match or not add_match or win_match.start() >= add_match.start():
         log.debug(f"#{draw_no}: can't locate number sections")
         return None
+
+    win_idx = win_match.start()
+    add_idx = add_match.start()
 
     win_section = text[win_idx:add_idx]
     add_section = text[add_idx: add_idx + 80]
@@ -165,8 +168,16 @@ def scrape_draws(draw_numbers: list[int]) -> list[dict]:
             url = draw_url(draw_no)
             try:
                 page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-                # Wait for draw number element indicating results are loaded
-                page.wait_for_selector(".drawNumber, #drawNumber", timeout=15_000)
+                # Try to wait for a known element; fall back to network idle
+                # if the selector no longer exists (website layout changes).
+                try:
+                    page.wait_for_selector(
+                        ".drawNumber, #drawNumber, .result-container, table",
+                        timeout=10_000,
+                    )
+                except PlaywrightTimeout:
+                    log.debug(f"#{draw_no}: selector not found, waiting for networkidle")
+                    page.wait_for_load_state("networkidle", timeout=20_000)
 
                 text = page.inner_text("body")
                 draw = parse_draw_from_text(text, draw_no)
@@ -178,7 +189,8 @@ def scrape_draws(draw_numbers: list[int]) -> list[dict]:
                              f"{draw['num4']},{draw['num5']},{draw['num6']}  "
                              f"+{draw['additional_num']}")
                 else:
-                    log.warning(f"✗ #{draw_no}: parsed nothing")
+                    log.warning(f"✗ #{draw_no}: parsed nothing — page snippet: "
+                                f"{text[:300].replace(chr(10), ' ')!r}")
 
             except PlaywrightTimeout:
                 log.warning(f"✗ #{draw_no}: timeout (draw may not exist)")
@@ -267,9 +279,9 @@ def run_scraper(full_refresh: bool = False):
         log.info(f"Full refresh: {len(draw_numbers)} draws to fetch "
                  f"(#{target_from}–#{target_to})")
     else:
-        # Incremental: try the 10 draws after the latest known
+        # Incremental: try the 20 draws after the latest known
         target_from = latest_no + 1 if latest_no else 4150
-        target_to   = target_from + 9
+        target_to   = target_from + 19
         draw_numbers = list(range(target_to, target_from - 1, -1))
         log.info(f"Incremental: checking #{target_from}–#{target_to}")
 
