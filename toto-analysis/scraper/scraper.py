@@ -10,7 +10,7 @@ Draw URL format:
 
 Usage:
   python scraper.py           # incremental (latest draws only)
-  python scraper.py --full    # full refresh from 2024 onwards
+  python scraper.py --full    # full refresh from 2015 onwards (~draw #2900)
 """
 
 import base64
@@ -38,8 +38,8 @@ META_F    = DATA_DIR / "meta.json"
 
 BASE_URL  = "https://www.singaporepools.com.sg/en/product/sr/Pages/toto_results.aspx"
 
-# Earliest draw to fetch in full-refresh mode (~Jan 2024)
-FULL_REFRESH_FROM = 3938
+# Earliest draw to fetch in full-refresh mode (~Jan 2015)
+FULL_REFRESH_FROM = 2900
 
 
 # ── URL helpers ─────────────────────────────────────────────────────────────
