@@ -1,10 +1,16 @@
 name: Deploy to GitHub Pages
 
 on:
+  # 爬蟲 workflow 完成後自動觸發（GITHUB_TOKEN push 不會觸發 push event）
+  workflow_run:
+    workflows: ["🎱 TOTO Scraper"]
+    types: [completed]
+    branches: [master]
+
+  # 手動觸發 / workflow 檔案本身更新時
   push:
     branches: [master]
     paths:
-      - "toto-analysis/data/**"
       - "toto-analysis/docs/**"
       - ".github/workflows/deploy.yml"
 
