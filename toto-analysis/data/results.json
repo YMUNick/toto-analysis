@@ -1,5 +1,16 @@
 [
   {
+    "draw_number": 4222,
+    "draw_date": "2026-10-01",
+    "num1": 5,
+    "num2": 8,
+    "num3": 11,
+    "num4": 24,
+    "num5": 26,
+    "num6": 43,
+    "additional_num": 20
+  },
+  {
     "draw_number": 4221,
     "draw_date": "2026-09-28",
     "num1": 14,
